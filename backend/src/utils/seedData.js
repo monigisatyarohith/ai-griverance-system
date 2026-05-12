@@ -103,7 +103,8 @@ const seedData = async () => {
       ]
     });
 
-    console.log('✅ Seed data created successfully!');
+    const dbType = process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite';
+    console.log(`\n✅ Seed data created successfully! (${dbType})`);
     console.log('\n📋 Test Credentials:');
     console.log('   Admin:   admin@college.edu / admin123');
     console.log('   HOD:     hod@college.edu / hod123');

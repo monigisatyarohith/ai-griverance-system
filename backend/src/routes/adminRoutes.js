@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
-const { Op, fn, col } = require('sequelize');
+const { Op, fn, col, Sequelize } = require('sequelize');
 const User = require('../models/User');
 const Complaint = require('../models/Complaint');
 const AuditLog = require('../models/AuditLog');
@@ -75,13 +75,22 @@ router.get('/analytics', async (req, res) => {
       raw: true
     });
 
+    // Monthly stats - use dialect-agnostic date grouping
+    const dialect = require('../config/database').getDialect();
+    let dateExpr;
+    if (dialect === 'postgres') {
+      dateExpr = Sequelize.fn('to_char', col('createdAt'), 'YYYY-MM');
+    } else {
+      dateExpr = Sequelize.fn('strftime', '%Y-%m', col('createdAt'));
+    }
+
     const monthlyStats = await Complaint.findAll({
       attributes: [
-        [fn('strftime', '%Y-%m', col('createdAt')), '_id'],
+        [dateExpr, '_id'],
         [fn('COUNT', col('id')), 'count']
       ],
-      group: [fn('strftime', '%Y-%m', col('createdAt'))],
-      order: [[fn('strftime', '%Y-%m', col('createdAt')), 'ASC']],
+      group: [dateExpr],
+      order: [[dateExpr, 'ASC']],
       limit: 12,
       raw: true
     });

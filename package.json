@@ -1,12 +1,14 @@
 {
-  "name": "grievance-backend",
+  "name": "college-grievance-system",
   "version": "1.0.0",
-  "description": "College Grievance Management System Backend",
-  "main": "src/server.js",
+  "description": "College Grievance Management System",
+  "private": true,
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "seed": "node src/utils/seedData.js"
+    "build": "cd frontend && npm install && npm run build",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "seed": "cd backend && npm run seed",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -27,8 +29,5 @@
     "natural": "^6.10.4",
     "moment": "^2.29.4",
     "pdfkit": "^0.14.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
   }
 }
