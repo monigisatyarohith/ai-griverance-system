@@ -31,11 +31,15 @@ const User = sequelize.define('User', {
     }
   },
   role: {
-    type: DataTypes.ENUM('student', 'faculty', 'hod', 'admin'),
+    type: DataTypes.ENUM('student', 'faculty', 'hod', 'admin', 'vice_principal', 'coordinator'),
     defaultValue: 'student'
   },
   department: {
     type: DataTypes.ENUM('CSE', 'ECE', 'ME', 'CE', 'IT', 'Other'),
+    allowNull: true
+  },
+  coordinatorType: {
+    type: DataTypes.ENUM('academic', 'hostel', 'transport', 'examination', 'placement', 'maintenance', 'general'),
     allowNull: true
   },
   profileImage: {

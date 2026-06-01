@@ -21,10 +21,17 @@ const Complaint = sequelize.define('Complaint', {
       len: [20, 10000]
     }
   },
+  complainantType: {
+    type: DataTypes.ENUM('student', 'staff'),
+    allowNull: false,
+    defaultValue: 'student'
+  },
   category: {
     type: DataTypes.ENUM(
-      'academic', 'examination', 'faculty', 'hostel',
-      'infrastructure', 'administrative', 'library', 'transport', 'other'
+      'academics', 'scholarships', 'examinations', 'ragging',
+      'extra_curricular', 'boarding_lodging',
+      'social_inequality', 'gender_inequality', 'amenities', 'pay_perks', 'service',
+      'transport', 'placement', 'other'
     ),
     allowNull: false
   },
@@ -33,8 +40,19 @@ const Complaint = sequelize.define('Complaint', {
     defaultValue: 'medium'
   },
   status: {
-    type: DataTypes.ENUM('submitted', 'under_review', 'in_progress', 'escalated', 'resolved', 'rejected'),
-    defaultValue: 'submitted'
+    type: DataTypes.ENUM(
+      'Pending Vice Principal Approval',
+      'Approved by Vice Principal',
+      'Rejected by Vice Principal',
+      'Under Review',
+      'Investigation Started',
+      'In Progress',
+      'Awaiting Information',
+      'Escalated',
+      'Resolved',
+      'Closed'
+    ),
+    defaultValue: 'Pending Vice Principal Approval'
   },
   studentId: {
     type: DataTypes.INTEGER,
@@ -47,6 +65,10 @@ const Complaint = sequelize.define('Complaint', {
   escalationLevel: {
     type: DataTypes.INTEGER,
     defaultValue: 0
+  },
+  estimatedResolutionDate: {
+    type: DataTypes.DATE,
+    allowNull: true
   },
   // Store arrays as JSON in SQLite
   attachments: {
@@ -106,7 +128,8 @@ const Complaint = sequelize.define('Complaint', {
   indexes: [
     { fields: ['studentId', 'createdAt'] },
     { fields: ['status', 'assignedToId'] },
-    { fields: ['category', 'createdAt'] }
+    { fields: ['category', 'createdAt'] },
+    { fields: ['complainantType'] }
   ]
 });
 

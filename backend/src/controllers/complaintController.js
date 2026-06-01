@@ -3,14 +3,38 @@ const Complaint = require('../models/Complaint');
 const Notification = require('../models/Notification');
 const AuditLog = require('../models/AuditLog');
 const User = require('../models/User');
+const GrievanceUpdate = require('../models/GrievanceUpdate');
+const Setting = require('../models/Setting');
+const sendEmail = require('../utils/sendEmail');
 const { aiCategorizeComplaint } = require('../services/aiService');
+
+// Helper: map category to coordinatorType
+const getCoordinatorType = (category) => {
+  switch (category) {
+    case 'academics':
+      return 'academic';
+    case 'boarding_lodging':
+      return 'hostel';
+    case 'transport':
+      return 'transport';
+    case 'examinations':
+      return 'examination';
+    case 'placement':
+      return 'placement';
+    case 'amenities':
+    case 'infrastructure':
+      return 'maintenance';
+    default:
+      return 'general';
+  }
+};
 
 // @desc    Create complaint
 // @route   POST /api/complaints
 // @access  Private/Student
 exports.createComplaint = async (req, res) => {
   try {
-    const { title, description, category, priority } = req.body;
+    const { title, description, category, priority, complainantType } = req.body;
     
     // AI categorization if category not provided
     let finalCategory = category;
@@ -21,38 +45,83 @@ exports.createComplaint = async (req, res) => {
     const complaint = await Complaint.create({
       title,
       description,
+      complainantType: complainantType || 'student',
       category: finalCategory || 'other',
       priority: priority || 'medium',
       studentId: req.user.id,
+      status: 'Pending Vice Principal Approval',
       timeline: [{
-        status: 'submitted',
-        message: 'Complaint submitted successfully',
+        status: 'Pending Vice Principal Approval',
+        message: 'Grievance submitted and pending Vice Principal approval',
         changedBy: req.user.id,
         timestamp: new Date()
       }]
     });
 
-    // Find appropriate faculty to assign (based on department and category)
-    const faculty = await User.findOne({
-      where: {
-        role: 'faculty',
-        department: req.user.department
-      }
-    });
-    
-    if (faculty) {
-      complaint.assignedToId = faculty.id;
-      await complaint.save();
-      
-      // Notify faculty
-      await Notification.create({
-        userId: faculty.id,
-        title: 'New Complaint Assigned',
-        message: `New ${complaint.category} complaint: ${complaint.title}`,
-        type: 'assignment',
-        relatedComplaintId: complaint.id
-      });
+    // Fetch Vice Principal Email dynamically from settings or database
+    const vpSetting = await Setting.findOne({ where: { key: 'vice_principal_email' } });
+    let vpEmail = vpSetting ? vpSetting.value : null;
+    if (!vpEmail) {
+      const vp = await User.findOne({ where: { role: 'vice_principal' } });
+      vpEmail = vp ? vp.email : 'viceprincipal@college.edu';
     }
+
+    const actionUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/complaint/${complaint.id}`;
+    const submissionDate = new Date().toLocaleString();
+
+    // Send VP and Student notification emails concurrently
+    await Promise.all([
+      sendEmail({
+        email: vpEmail,
+        subject: 'New Grievance Submitted - Approval Required',
+        message: `New Grievance Submitted - Approval Required\n\n` +
+                 `Grievance ID: #${complaint.id}\n` +
+                 `Student Name: ${req.user.name}\n` +
+                 `Roll Number / Student ID: ${req.user.id}\n` +
+                 `Department: ${req.user.department || 'N/A'}\n` +
+                 `Category: ${complaint.category}\n` +
+                 `Description: ${complaint.description}\n` +
+                 `Submission Date: ${submissionDate}\n` +
+                 `Direct link: ${actionUrl}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+            <h2 style="color: #7C3AED; margin-bottom: 5px;">College Grievance System</h2>
+            <p style="color: #4B5563; font-size: 14px; margin-top: 0;">New Grievance Pending Vice Principal Approval</p>
+            <div style="background-color: #F9FAFB; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #F3F4F6;">
+              <strong>Grievance ID:</strong> #${complaint.id}<br/>
+              <strong>Student Name:</strong> ${req.user.name}<br/>
+              <strong>Roll Number / ID:</strong> ${req.user.id}<br/>
+              <strong>Department:</strong> ${req.user.department || 'N/A'}<br/>
+              <strong>Category:</strong> ${complaint.category}<br/>
+              <strong>Submission Date:</strong> ${submissionDate}<br/>
+              <hr style="border: 0; border-top: 1px solid #E5E7EB; margin: 12px 0;"/>
+              <strong>Description:</strong><br/>
+              <p style="white-space: pre-wrap; margin-top: 5px; color: #374151;">${complaint.description}</p>
+            </div>
+            <div style="margin: 25px 0;">
+              <a href="${actionUrl}" style="background-color: #7C3AED; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Review Grievance</a>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;"/>
+            <p style="color: #9CA3AF; font-size: 11px; margin-bottom: 0;">This is an automated notification from the College Grievance Management System.</p>
+          </div>
+        `
+      }),
+      sendEmail({
+        email: req.user.email,
+        subject: `Grievance Submitted Successfully: #${complaint.id}`,
+        message: `Your grievance has been submitted and is currently pending Vice Principal approval.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+            <h2 style="color: #7C3AED;">Grievance Submitted Successfully</h2>
+            <p>Dear ${req.user.name},</p>
+            <p>Your grievance <strong>#${complaint.id}</strong> ("${complaint.title}") has been received and sent to the Vice Principal for approval.</p>
+            <p>You can track the progress of your grievance directly on your dashboard.</p>
+            <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;"/>
+            <p style="color: #9CA3AF; font-size: 11px;">College Grievance Management System</p>
+          </div>
+        `
+      })
+    ]);
 
     // Create audit log
     await AuditLog.create({
@@ -68,7 +137,7 @@ exports.createComplaint = async (req, res) => {
     // Reload with associations
     const result = await Complaint.findByPk(complaint.id, {
       include: [
-        { model: User, as: 'student', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'department'] },
         { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
       ]
     });
@@ -92,10 +161,11 @@ exports.getComplaints = async (req, res) => {
     // Role-based filtering
     if (req.user.role === 'student') {
       where.studentId = req.user.id;
+    } else if (req.user.role === 'coordinator') {
+      where.assignedToId = req.user.id;
     } else if (req.user.role === 'faculty') {
       where.assignedToId = req.user.id;
     } else if (req.user.role === 'hod') {
-      // Get complaints from faculty in department
       const faculty = await User.findAll({
         where: { department: req.user.department, role: 'faculty' },
         attributes: ['id']
@@ -103,7 +173,6 @@ exports.getComplaints = async (req, res) => {
       const facultyIds = faculty.map(f => f.id);
       where.assignedToId = { [Op.in]: facultyIds };
     }
-    // Admin can see all
 
     // Apply filters
     if (req.query.status) where.status = req.query.status;
@@ -125,7 +194,7 @@ exports.getComplaints = async (req, res) => {
     const { count: total, rows: complaints } = await Complaint.findAndCountAll({
       where,
       include: [
-        { model: User, as: 'student', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'department'] },
         { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
       ],
       order: [['createdAt', 'DESC']],
@@ -148,9 +217,408 @@ exports.getComplaints = async (req, res) => {
   }
 };
 
-// @desc    Update complaint status
+// @desc    Approve Complaint (Vice Principal)
+// @route   PUT /api/complaints/:id/approve
+// @access  Private/Vice Principal
+exports.approveComplaint = async (req, res) => {
+  try {
+    const { remarks, priority } = req.body;
+    const complaint = await Complaint.findByPk(req.params.id, {
+      include: [{ model: User, as: 'student' }]
+    });
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    // Identify coordinator category
+    const coordType = getCoordinatorType(complaint.category);
+
+    // Look up coordinator email from admin settings
+    const coordSetting = await Setting.findOne({ where: { key: `coordinator_${coordType}_email` } });
+    let coordEmail = coordSetting ? coordSetting.value : null;
+
+    // Load matching coordinator from User database
+    const dbCoordinator = await User.findOne({
+      where: {
+        role: 'coordinator',
+        coordinatorType: coordType
+      }
+    });
+
+    // Default to general coordinator if not found
+    let finalCoordinator = dbCoordinator;
+    if (!finalCoordinator) {
+      finalCoordinator = await User.findOne({
+        where: {
+          role: 'coordinator',
+          coordinatorType: 'general'
+        }
+      });
+    }
+
+    // Try to find a user matching the settings email, otherwise fallback
+    let targetCoordinatorUser = null;
+    if (coordEmail) {
+      targetCoordinatorUser = await User.findOne({ where: { email: coordEmail } });
+    }
+    if (!targetCoordinatorUser) {
+      targetCoordinatorUser = finalCoordinator;
+    }
+
+    const finalTargetEmail = coordEmail || (targetCoordinatorUser ? targetCoordinatorUser.email : 'coordinator@college.edu');
+
+    complaint.status = 'Approved by Vice Principal';
+    if (priority) {
+      complaint.priority = priority;
+    }
+    if (targetCoordinatorUser) {
+      complaint.assignedToId = targetCoordinatorUser.id;
+    }
+
+    const timeline = complaint.timeline || [];
+    timeline.push({
+      status: 'Approved by Vice Principal',
+      message: remarks || 'Grievance approved by Vice Principal and assigned to coordinator',
+      changedBy: req.user.id,
+      timestamp: new Date()
+    });
+    complaint.timeline = timeline;
+
+    await complaint.save();
+
+    // 3. Send Email to the Assigned Coordinator
+    if (targetCoordinatorUser) {
+      await Notification.create({
+        userId: targetCoordinatorUser.id,
+        title: 'New Complaint Assigned',
+        message: `New grievance assigned: #${complaint.id} - ${complaint.title}`,
+        type: 'assignment',
+        relatedComplaintId: complaint.id
+      });
+    }
+
+    // Send coordinator assignment and student approval notification emails concurrently
+    await Promise.all([
+      sendEmail({
+        email: finalTargetEmail,
+        subject: `New Grievance Assigned - Action Required: #${complaint.id}`,
+        message: `You have been assigned a new grievance to investigate.\n\n` +
+                 `Grievance ID: #${complaint.id}\n` +
+                 `Category: ${complaint.category}\n` +
+                 `Title: ${complaint.title}\n` +
+                 `Description: ${complaint.description}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+            <h2 style="color: #7C3AED;">New Grievance Assigned - Action Required</h2>
+            <p>You have been assigned a new grievance to coordinate and resolve.</p>
+            <div style="background-color: #F9FAFB; padding: 15px; border-radius: 8px; margin: 15px 0;">
+              <strong>Grievance ID:</strong> #${complaint.id}<br/>
+              <strong>Student Name:</strong> ${complaint.student ? complaint.student.name : 'N/A'}<br/>
+              <strong>Category:</strong> ${complaint.category}<br/>
+              <strong>Title:</strong> ${complaint.title}<br/>
+              <strong>Description:</strong><br/>
+              <p style="white-space: pre-wrap; margin-top: 5px;">${complaint.description}</p>
+            </div>
+            <p>Please log in to your coordinator dashboard to start investigating.</p>
+          </div>
+        `
+      }),
+      sendEmail({
+        email: complaint.student.email,
+        subject: `Grievance Approved by Vice Principal: #${complaint.id}`,
+        message: `Your grievance has been approved by the Vice Principal and assigned to a coordinator.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+            <h2 style="color: #10B981;">Grievance Approved</h2>
+            <p>Dear ${complaint.student.name},</p>
+            <p>Your grievance <strong>#${complaint.id}</strong> has been approved by the Vice Principal.</p>
+            <p><strong>Remarks:</strong> ${remarks || 'None'}</p>
+            <p>It has been routed and assigned to our <strong>${coordType} coordinator</strong> for resolution.</p>
+            <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;"/>
+            <p style="color: #9CA3AF; font-size: 11px;">College Grievance Management System</p>
+          </div>
+        `
+      })
+    ]);
+
+    // In-app notification to student
+    await Notification.create({
+      userId: complaint.studentId,
+      title: 'Grievance Approved',
+      message: `Your grievance #${complaint.id} has been approved by the Vice Principal`,
+      type: 'complaint_update',
+      relatedComplaintId: complaint.id
+    });
+
+    // Audit Log
+    await AuditLog.create({
+      userId: req.user.id,
+      action: 'approve',
+      resource: 'complaint',
+      resourceId: complaint.id,
+      details: { remarks },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
+    const reloaded = await Complaint.findByPk(complaint.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'department'] },
+        { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
+      ]
+    });
+
+    res.json({ success: true, data: formatComplaint(reloaded) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reject Complaint (Vice Principal)
+// @route   PUT /api/complaints/:id/reject
+// @access  Private/Vice Principal
+exports.rejectComplaint = async (req, res) => {
+  try {
+    const { remarks } = req.body;
+    const complaint = await Complaint.findByPk(req.params.id, {
+      include: [{ model: User, as: 'student' }]
+    });
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    complaint.status = 'Rejected by Vice Principal';
+
+    const timeline = complaint.timeline || [];
+    timeline.push({
+      status: 'Rejected by Vice Principal',
+      message: remarks || 'Grievance rejected by Vice Principal',
+      changedBy: req.user.id,
+      timestamp: new Date()
+    });
+    complaint.timeline = timeline;
+
+    await complaint.save();
+
+    // 4. Rejection Notification Email to Student
+    await sendEmail({
+      email: complaint.student.email,
+      subject: `Grievance Rejected by Vice Principal - Resolution Update: #${complaint.id}`,
+      message: `Your grievance has been rejected by the Vice Principal. Remarks: ${remarks}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+          <h2 style="color: #EF4444;">Grievance Rejected</h2>
+          <p>Dear ${complaint.student.name},</p>
+          <p>Your grievance <strong>#${complaint.id}</strong> ("${complaint.title}") has been rejected by the Vice Principal and is now closed.</p>
+          <div style="background-color: #FEF2F2; padding: 15px; border-radius: 8px; border: 1px solid #FEE2E2; margin: 15px 0;">
+            <strong>Remarks / Reason:</strong><br/>
+            <p style="margin-top: 5px; color: #991B1B;">${remarks || 'No remarks provided'}</p>
+          </div>
+          <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;"/>
+          <p style="color: #9CA3AF; font-size: 11px;">College Grievance Management System</p>
+        </div>
+      `
+    });
+
+    // In-app notification to student
+    await Notification.create({
+      userId: complaint.studentId,
+      title: 'Grievance Rejected',
+      message: `Your grievance #${complaint.id} has been rejected by the Vice Principal`,
+      type: 'complaint_update',
+      relatedComplaintId: complaint.id
+    });
+
+    // Audit Log
+    await AuditLog.create({
+      userId: req.user.id,
+      action: 'reject',
+      resource: 'complaint',
+      resourceId: complaint.id,
+      details: { remarks },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
+    const reloaded = await Complaint.findByPk(complaint.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'department'] },
+        { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
+      ]
+    });
+
+    res.json({ success: true, data: formatComplaint(reloaded) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add Grievance Update (Coordinator)
+// @route   POST /api/complaints/:id/updates
+// @access  Private/Coordinator
+exports.addGrievanceUpdate = async (req, res) => {
+  try {
+    const { status, remarks, estimatedResolutionDate } = req.body;
+    const complaint = await Complaint.findByPk(req.params.id, {
+      include: [{ model: User, as: 'student' }]
+    });
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    // Verify it is assigned to this coordinator
+    if (complaint.assignedToId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this complaint' });
+    }
+
+    let attachmentPath = null;
+    if (req.files && req.files.length > 0) {
+      attachmentPath = req.files[0].path;
+    }
+
+    // Create GrievanceUpdate history
+    const update = await GrievanceUpdate.create({
+      grievance_id: complaint.id,
+      coordinator_id: req.user.id,
+      status,
+      remarks,
+      attachment_path: attachmentPath,
+      estimatedResolutionDate: estimatedResolutionDate ? new Date(estimatedResolutionDate) : null
+    });
+
+    // Update Complaint Main fields
+    complaint.status = status;
+    if (estimatedResolutionDate) {
+      complaint.estimatedResolutionDate = new Date(estimatedResolutionDate);
+    }
+
+    const isResolvedOrClosed = status === 'Resolved' || status === 'Closed';
+
+    if (isResolvedOrClosed) {
+      complaint.resolution = {
+        text: remarks,
+        resolvedBy: req.user.id,
+        resolvedAt: new Date()
+      };
+    }
+
+    const timeline = complaint.timeline || [];
+    timeline.push({
+      status,
+      message: remarks,
+      changedBy: req.user.id,
+      timestamp: new Date(),
+      attachment: attachmentPath
+    });
+    complaint.timeline = timeline;
+
+    await complaint.save();
+
+    // 5. Send notifications to Student based on resolution state
+    if (isResolvedOrClosed) {
+      // Step 5: Final Resolution Notification Email
+      await sendEmail({
+        email: complaint.student.email,
+        subject: `Grievance Resolved - Final Resolution Details: #${complaint.id}`,
+        message: `Your grievance #${complaint.id} has been resolved.\n\n` +
+                 `Coordinator Remarks: ${remarks}\n` +
+                 `Resolution Status: ${status}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+            <h2 style="color: #10B981; margin-top: 0;">Grievance Resolved Successfully</h2>
+            <p>Dear ${complaint.student.name},</p>
+            <p>Your grievance <strong>#${complaint.id}</strong> ("${complaint.title}") has been marked as <strong>${status}</strong> by the coordinator.</p>
+            <div style="background-color: #F0FDF4; padding: 15px; border-radius: 8px; border: 1px solid #DCFCE7; margin: 15px 0;">
+              <strong>Coordinator Remarks / Resolution Details:</strong><br/>
+              <p style="margin-top: 5px; color: #166534;">${remarks || 'No remarks provided'}</p>
+            </div>
+            <p>Please log in to your dashboard to view the full investigation log or download attachments.</p>
+            <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;"/>
+            <p style="color: #9CA3AF; font-size: 11px;">College Grievance Management System</p>
+          </div>
+        `
+      });
+    } else {
+      // Step 4: Status Update Notification Email
+      await sendEmail({
+        email: complaint.student.email,
+        subject: `Grievance #${complaint.id} Stage Updated: ${status}`,
+        message: `Your grievance #${complaint.id} has been updated. Current Stage: ${status}. Remarks: ${remarks}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; border: 1px solid #E5E7EB; border-radius: 8px;">
+            <h3 style="color: #7C3AED; margin-top: 0;">Grievance Update Notification</h3>
+            <p>Dear ${complaint.student.name},</p>
+            <p>Your grievance <strong>#${complaint.id}</strong> has been updated by the coordinator.</p>
+            <div style="background-color: #F9FAFB; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #7C3AED;">
+              <strong>Current Stage:</strong> ${status}<br/>
+              <strong>Coordinator Remarks:</strong> ${remarks || 'None'}<br/>
+              <strong>Estimated Resolution Date:</strong> ${estimatedResolutionDate ? new Date(estimatedResolutionDate).toLocaleDateString() : 'N/A'}<br/>
+              <strong>Updated Date & Time:</strong> ${new Date().toLocaleString()}
+            </div>
+            <p>Please log in to the portal to view full details or download attachments.</p>
+            <hr style="border: 0; border-top: 1px solid #E5E7EB; margin-top: 30px;"/>
+            <p style="color: #9CA3AF; font-size: 11px;">College Grievance Management System</p>
+          </div>
+        `
+      });
+    }
+
+    // Step 4: In-app Notification to Student
+    await Notification.create({
+      userId: complaint.studentId,
+      title: isResolvedOrClosed ? 'Grievance Resolved' : 'Grievance Update',
+      message: `Your grievance #${complaint.id} has been updated to "${status}"`,
+      type: 'complaint_update',
+      relatedComplaintId: complaint.id
+    });
+
+    // Audit Log
+    await AuditLog.create({
+      userId: req.user.id,
+      action: 'update_progress',
+      resource: 'complaint',
+      resourceId: complaint.id,
+      details: { status, remarks, attachmentPath },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
+    const reloaded = await Complaint.findByPk(complaint.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'department'] },
+        { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
+      ]
+    });
+
+    res.json({ success: true, update, data: formatComplaint(reloaded) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all Grievance Updates
+// @route   GET /api/complaints/:id/updates
+// @access  Private
+exports.getGrievanceUpdates = async (req, res) => {
+  try {
+    const updates = await GrievanceUpdate.findAll({
+      where: { grievance_id: req.params.id },
+      include: [{ model: User, as: 'coordinator', attributes: ['id', 'name', 'role'] }],
+      order: [['created_at', 'ASC']]
+    });
+
+    res.json({ success: true, data: updates });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update complaint status (deprecated, backward compatible)
 // @route   PUT /api/complaints/:id/status
-// @access  Private/Faculty/HOD/Admin
+// @access  Private
 exports.updateStatus = async (req, res) => {
   try {
     const { status, remarks } = req.body;
@@ -161,8 +629,6 @@ exports.updateStatus = async (req, res) => {
     }
 
     complaint.status = status;
-    
-    // Append to timeline (JSON array)
     const timeline = complaint.timeline || [];
     timeline.push({
       status,
@@ -172,7 +638,7 @@ exports.updateStatus = async (req, res) => {
     });
     complaint.timeline = timeline;
 
-    if (status === 'resolved') {
+    if (status === 'Resolved' || status === 'resolved') {
       complaint.resolution = {
         text: remarks,
         resolvedBy: req.user.id,
@@ -182,37 +648,7 @@ exports.updateStatus = async (req, res) => {
 
     await complaint.save();
 
-    // Notify student
-    await Notification.create({
-      userId: complaint.studentId,
-      title: `Complaint ${status}`,
-      message: `Your complaint "${complaint.title}" has been ${status}`,
-      type: 'complaint_update',
-      relatedComplaintId: complaint.id
-    });
-
-    // Create audit log
-    await AuditLog.create({
-      userId: req.user.id,
-      action: 'update',
-      resource: 'complaint',
-      resourceId: complaint.id,
-      details: { status, remarks },
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
-    });
-
-    const result = await Complaint.findByPk(complaint.id, {
-      include: [
-        { model: User, as: 'student', attributes: ['id', 'name', 'email'] },
-        { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
-      ]
-    });
-
-    res.json({
-      success: true,
-      data: formatComplaint(result)
-    });
+    res.json({ success: true, data: formatComplaint(complaint) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -227,6 +663,8 @@ exports.getStats = async (req, res) => {
     
     if (req.user.role === 'student') {
       where.studentId = req.user.id;
+    } else if (req.user.role === 'coordinator') {
+      where.assignedToId = req.user.id;
     } else if (req.user.role === 'faculty') {
       where.assignedToId = req.user.id;
     } else if (req.user.role === 'hod') {
@@ -238,12 +676,16 @@ exports.getStats = async (req, res) => {
     }
 
     const total = await Complaint.count({ where });
-    const submitted = await Complaint.count({ where: { ...where, status: 'submitted' } });
-    const underReview = await Complaint.count({ where: { ...where, status: 'under_review' } });
-    const inProgress = await Complaint.count({ where: { ...where, status: 'in_progress' } });
-    const escalated = await Complaint.count({ where: { ...where, status: 'escalated' } });
-    const resolved = await Complaint.count({ where: { ...where, status: 'resolved' } });
-    const rejected = await Complaint.count({ where: { ...where, status: 'rejected' } });
+    const pendingVP = await Complaint.count({ where: { ...where, status: 'Pending Vice Principal Approval' } });
+    const approvedVP = await Complaint.count({ where: { ...where, status: 'Approved by Vice Principal' } });
+    const rejectedVP = await Complaint.count({ where: { ...where, status: 'Rejected by Vice Principal' } });
+    const underReview = await Complaint.count({ where: { ...where, status: 'Under Review' } });
+    const investigationStarted = await Complaint.count({ where: { ...where, status: 'Investigation Started' } });
+    const inProgress = await Complaint.count({ where: { ...where, status: 'In Progress' } });
+    const awaitingInfo = await Complaint.count({ where: { ...where, status: 'Awaiting Information' } });
+    const escalated = await Complaint.count({ where: { ...where, status: 'Escalated' } });
+    const resolved = await Complaint.count({ where: { ...where, status: 'Resolved' } });
+    const closed = await Complaint.count({ where: { ...where, status: 'Closed' } });
 
     // Category-wise stats
     const categoryStats = await Complaint.findAll({
@@ -258,7 +700,19 @@ exports.getStats = async (req, res) => {
 
     res.json({
       success: true,
-      stats: { total, submitted, underReview, inProgress, escalated, resolved, rejected },
+      stats: {
+        total,
+        pendingVP,
+        approvedVP,
+        rejectedVP,
+        underReview,
+        investigationStarted,
+        inProgress,
+        awaitingInfo,
+        escalated,
+        resolved,
+        closed
+      },
       categoryStats
     });
   } catch (error) {
@@ -266,7 +720,60 @@ exports.getStats = async (req, res) => {
   }
 };
 
-// Helper: format complaint for API response (add _id alias for frontend compatibility)
+// @desc    Update complaint priority (Vice Principal / Admin)
+// @route   PUT /api/complaints/:id/priority
+// @access  Private/Vice Principal
+exports.updatePriority = async (req, res) => {
+  try {
+    const { priority } = req.body;
+    const complaint = await Complaint.findByPk(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    const oldPriority = complaint.priority;
+    complaint.priority = priority;
+
+    const timeline = complaint.timeline || [];
+    timeline.push({
+      status: complaint.status,
+      message: `Priority updated from ${oldPriority} to ${priority} by Vice Principal`,
+      changedBy: req.user.id,
+      timestamp: new Date()
+    });
+    complaint.timeline = timeline;
+
+    await complaint.save();
+
+    // Create audit log
+    await AuditLog.create({
+      userId: req.user.id,
+      action: 'update',
+      resource: 'complaint',
+      resourceId: complaint.id,
+      details: { oldPriority, newPriority: priority },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
+    const reloaded = await Complaint.findByPk(complaint.id, {
+      include: [
+        { model: User, as: 'student', attributes: ['id', 'name', 'email', 'department'] },
+        { model: User, as: 'assignedTo', attributes: ['id', 'name', 'email'] }
+      ]
+    });
+
+    res.json({
+      success: true,
+      data: formatComplaint(reloaded)
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Helper: format complaint for API response
 function formatComplaint(complaint) {
   if (!complaint) return null;
   const json = complaint.toJSON();

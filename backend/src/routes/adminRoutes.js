@@ -126,4 +126,38 @@ router.get('/audit-logs', async (req, res) => {
   }
 });
 
+const Setting = require('../models/Setting');
+
+// Get all system settings
+router.get('/settings', async (req, res) => {
+  try {
+    const settings = await Setting.findAll();
+    res.json({ success: true, data: settings });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update or create settings
+router.post('/settings', async (req, res) => {
+  try {
+    const updates = req.body;
+    if (!Array.isArray(updates)) {
+      return res.status(400).json({ message: 'Payload must be an array of updates' });
+    }
+
+    for (const update of updates) {
+      const { key, value } = update;
+      const [setting] = await Setting.findOrCreate({ where: { key }, defaults: { value: '' } });
+      setting.value = value;
+      await setting.save();
+    }
+
+    const allSettings = await Setting.findAll();
+    res.json({ success: true, data: allSettings, message: 'Settings updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

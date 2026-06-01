@@ -125,14 +125,21 @@ const Complaints = () => {
             className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
           >
             <option value="">All Categories</option>
-            <option value="academic">Academic</option>
-            <option value="examination">Examination</option>
-            <option value="faculty">Faculty</option>
-            <option value="hostel">Hostel</option>
-            <option value="infrastructure">Infrastructure</option>
-            <option value="administrative">Administrative</option>
-            <option value="library">Library</option>
-            <option value="transport">Transport</option>
+            <optgroup label="Student Grievances">
+              <option value="academics">Academics</option>
+              <option value="scholarships">Scholarships</option>
+              <option value="examinations">Examinations</option>
+              <option value="ragging">Ragging</option>
+              <option value="extra_curricular">Extra Curricular</option>
+              <option value="boarding_lodging">Boarding & Lodging</option>
+            </optgroup>
+            <optgroup label="Staff Grievances">
+              <option value="social_inequality">Social Inequality</option>
+              <option value="gender_inequality">Gender Inequality</option>
+              <option value="amenities">Amenities</option>
+              <option value="pay_perks">Pay & Perks</option>
+              <option value="service">Service</option>
+            </optgroup>
             <option value="other">Other</option>
           </select>
         </div>
