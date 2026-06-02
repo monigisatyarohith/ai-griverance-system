@@ -89,12 +89,12 @@ const SubmitComplaint = () => {
       className="max-w-4xl mx-auto"
     >
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-500 px-6 py-8">
-          <h1 className="text-2xl font-bold text-white">Submit a Grievance</h1>
-          <p className="text-white/90 mt-2">Please provide detailed information about your grievance as per the college's Grievance Redressal System</p>
+        <div className="bg-gradient-to-r from-purple-600 to-blue-500 px-4 sm:px-6 py-6 sm:py-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Submit a Grievance</h1>
+          <p className="text-white/90 mt-2 text-sm sm:text-base">Please provide detailed information about your grievance as per the college's Grievance Redressal System</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-6">
           {/* Complainant Type */}
           <div>
             <label className="block text-sm font-medium mb-3">I am a *</label>
@@ -225,18 +225,18 @@ const SubmitComplaint = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-4">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="px-6 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="w-full sm:w-auto px-6 py-2.5 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm order-2 sm:order-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-semibold order-1 sm:order-2"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Grievance'}
             </button>

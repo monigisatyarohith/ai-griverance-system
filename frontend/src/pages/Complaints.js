@@ -74,17 +74,17 @@ const Complaints = () => {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             {user?.role === 'student' ? 'My Complaints' : 'Assigned Complaints'}
           </h1>
-          <p className="text-gray-500 mt-1">View and manage your grievances</p>
+          <p className="text-gray-500 mt-1 text-sm">View and manage your grievances</p>
         </div>
         {user?.role === 'student' && (
           <Link
             to="/submit-complaint"
-            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition-all"
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:opacity-90 transition-all text-sm text-center flex-shrink-0"
           >
             + New Complaint
           </Link>
@@ -93,8 +93,8 @@ const Complaints = () => {
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
             <div className="relative">
               <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -102,46 +102,48 @@ const Complaints = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search complaints..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 text-sm"
               />
             </div>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-          >
-            <option value="">All Status</option>
-            <option value="submitted">Submitted</option>
-            <option value="under_review">Under Review</option>
-            <option value="in_progress">In Progress</option>
-            <option value="escalated">Escalated</option>
-            <option value="resolved">Resolved</option>
-            <option value="rejected">Rejected</option>
-          </select>
-          <select
-            value={categoryFilter}
-            onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-          >
-            <option value="">All Categories</option>
-            <optgroup label="Student Grievances">
-              <option value="academics">Academics</option>
-              <option value="scholarships">Scholarships</option>
-              <option value="examinations">Examinations</option>
-              <option value="ragging">Ragging</option>
-              <option value="extra_curricular">Extra Curricular</option>
-              <option value="boarding_lodging">Boarding & Lodging</option>
-            </optgroup>
-            <optgroup label="Staff Grievances">
-              <option value="social_inequality">Social Inequality</option>
-              <option value="gender_inequality">Gender Inequality</option>
-              <option value="amenities">Amenities</option>
-              <option value="pay_perks">Pay & Perks</option>
-              <option value="service">Service</option>
-            </optgroup>
-            <option value="other">Other</option>
-          </select>
+          <div className="flex gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 text-sm"
+            >
+              <option value="">All Status</option>
+              <option value="submitted">Submitted</option>
+              <option value="under_review">Under Review</option>
+              <option value="in_progress">In Progress</option>
+              <option value="escalated">Escalated</option>
+              <option value="resolved">Resolved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select
+              value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
+              className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 text-sm"
+            >
+              <option value="">All Categories</option>
+              <optgroup label="Student Grievances">
+                <option value="academics">Academics</option>
+                <option value="scholarships">Scholarships</option>
+                <option value="examinations">Examinations</option>
+                <option value="ragging">Ragging</option>
+                <option value="extra_curricular">Extra Curricular</option>
+                <option value="boarding_lodging">Boarding & Lodging</option>
+              </optgroup>
+              <optgroup label="Staff Grievances">
+                <option value="social_inequality">Social Inequality</option>
+                <option value="gender_inequality">Gender Inequality</option>
+                <option value="amenities">Amenities</option>
+                <option value="pay_perks">Pay & Perks</option>
+                <option value="service">Service</option>
+              </optgroup>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -170,11 +172,11 @@ const Complaints = () => {
             >
               <Link
                 to={`/complaint/${complaint._id}`}
-                className="block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg p-5 transition-all duration-200"
+                className="block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg p-4 sm:p-5 transition-all duration-200"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-white truncate">
                       {complaint.title}
                     </h3>
                     <p className="text-gray-500 mt-1 text-sm line-clamp-2">
@@ -192,7 +194,7 @@ const Complaints = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="text-right ml-4">
+                  <div className="text-left sm:text-right flex-shrink-0">
                     <p className="text-xs text-gray-400">
                       {new Date(complaint.createdAt).toLocaleDateString()}
                     </p>

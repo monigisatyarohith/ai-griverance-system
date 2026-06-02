@@ -122,9 +122,9 @@ const Dashboard = () => {
     return (
       <div className="space-y-6">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-xl">
-          <h1 className="text-3xl font-bold">Vice Principal Administration Panel</h1>
-          <p className="mt-2 opacity-90">Review student/staff submissions, add remarks, and route complaints dynamically to assigned coordinators.</p>
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 sm:p-6 text-white shadow-xl">
+          <h1 className="text-xl sm:text-3xl font-bold">Vice Principal Administration Panel</h1>
+          <p className="mt-2 opacity-90 text-sm sm:text-base">Review student/staff submissions, add remarks, and route complaints dynamically to assigned coordinators.</p>
         </div>
 
         {/* Stats */}
@@ -149,37 +149,37 @@ const Dashboard = () => {
         </div>
 
         {/* Action Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-150 dark:border-gray-700 p-6">
-          <div className="flex border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-150 dark:border-gray-700 p-4 sm:p-6">
+          <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700 pb-4 mb-6 -mx-1 scrollbar-hide">
             <button
               onClick={() => setActiveTab('pending')}
-              className={`pb-2 px-4 font-semibold text-sm transition-all border-b-2 -mb-[18px] ${
+              className={`pb-2 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-all border-b-2 -mb-[18px] whitespace-nowrap ${
                 activeTab === 'pending'
                   ? 'border-purple-600 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Pending Approval ({stats?.pendingVP || 0})
+              Pending ({stats?.pendingVP || 0})
             </button>
             <button
               onClick={() => setActiveTab('approved')}
-              className={`pb-2 px-4 font-semibold text-sm transition-all border-b-2 -mb-[18px] ${
+              className={`pb-2 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-all border-b-2 -mb-[18px] whitespace-nowrap ${
                 activeTab === 'approved'
                   ? 'border-purple-600 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Approved History ({stats?.approvedVP || 0})
+              Approved ({stats?.approvedVP || 0})
             </button>
             <button
               onClick={() => setActiveTab('rejected')}
-              className={`pb-2 px-4 font-semibold text-sm transition-all border-b-2 -mb-[18px] ${
+              className={`pb-2 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-all border-b-2 -mb-[18px] whitespace-nowrap ${
                 activeTab === 'rejected'
                   ? 'border-purple-600 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Rejected History ({stats?.rejectedVP || 0})
+              Rejected ({stats?.rejectedVP || 0})
             </button>
           </div>
 
@@ -337,9 +337,9 @@ const Dashboard = () => {
     return (
       <div className="space-y-6">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl p-6 text-white shadow-xl">
-          <h1 className="text-3xl font-bold">Coordinator Workspace</h1>
-          <p className="mt-2 opacity-90">Manage assigned grievances, post regular timeline/stage updates, upload evidence, and resolve issues.</p>
+        <div className="bg-gradient-to-r from-blue-600 to-violet-600 rounded-2xl p-4 sm:p-6 text-white shadow-xl">
+          <h1 className="text-xl sm:text-3xl font-bold">Coordinator Workspace</h1>
+          <p className="mt-2 opacity-90 text-sm sm:text-base">Manage assigned grievances, post regular timeline/stage updates, upload evidence, and resolve issues.</p>
         </div>
 
         {/* Stats */}
@@ -364,37 +364,37 @@ const Dashboard = () => {
         </div>
 
         {/* Action Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-150 dark:border-gray-700 p-6">
-          <div className="flex border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-150 dark:border-gray-700 p-4 sm:p-6">
+          <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-700 pb-4 mb-6 -mx-1 scrollbar-hide">
             <button
               onClick={() => setActiveTab('pending')}
-              className={`pb-2 px-4 font-semibold text-sm transition-all border-b-2 -mb-[18px] ${
+              className={`pb-2 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-all border-b-2 -mb-[18px] whitespace-nowrap ${
                 activeTab === 'pending'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Pending Investigation ({complaints.filter(c => c.status === 'Approved by Vice Principal').length})
+              Pending ({complaints.filter(c => c.status === 'Approved by Vice Principal').length})
             </button>
             <button
               onClick={() => setActiveTab('in_progress')}
-              className={`pb-2 px-4 font-semibold text-sm transition-all border-b-2 -mb-[18px] ${
+              className={`pb-2 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-all border-b-2 -mb-[18px] whitespace-nowrap ${
                 activeTab === 'in_progress'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              In Progress ({complaints.filter(c => ['Under Review', 'Investigation Started', 'In Progress', 'Awaiting Information', 'Escalated'].includes(c.status)).length})
+              Active ({complaints.filter(c => ['Under Review', 'Investigation Started', 'In Progress', 'Awaiting Information', 'Escalated'].includes(c.status)).length})
             </button>
             <button
               onClick={() => setActiveTab('resolved')}
-              className={`pb-2 px-4 font-semibold text-sm transition-all border-b-2 -mb-[18px] ${
+              className={`pb-2 px-3 sm:px-4 font-semibold text-xs sm:text-sm transition-all border-b-2 -mb-[18px] whitespace-nowrap ${
                 activeTab === 'resolved'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Resolved History
+              Resolved
             </button>
           </div>
 
@@ -464,15 +464,15 @@ const Dashboard = () => {
       className="space-y-6"
     >
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl flex justify-between items-center">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-4 sm:p-6 text-white shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
-          <p className="mt-2 opacity-95">Here's what's happening with your grievances today.</p>
+          <h1 className="text-xl sm:text-3xl font-bold">Welcome back, {user?.name}!</h1>
+          <p className="mt-1 sm:mt-2 opacity-95 text-sm sm:text-base">Here's what's happening with your grievances today.</p>
         </div>
         {user?.role === 'student' && (
           <Link
             to="/submit-complaint"
-            className="bg-white text-purple-700 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-gray-100 transition flex items-center space-x-1"
+            className="bg-white text-purple-700 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-sm shadow-md hover:bg-gray-100 transition flex items-center space-x-1 flex-shrink-0"
           >
             <PlusIcon className="w-4 h-4" />
             <span>New Grievance</span>
@@ -504,8 +504,8 @@ const Dashboard = () => {
       </div>
 
       {/* Recent complaints */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-150 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Recent Activity</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-150 dark:border-gray-700 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-bold mb-4 text-gray-900 dark:text-white">Recent Activity</h3>
         <div className="space-y-4">
           {loading ? (
             <div className="flex justify-center py-6">
@@ -515,16 +515,16 @@ const Dashboard = () => {
             <p className="text-center py-6 text-gray-500 dark:text-gray-400">You haven't submitted any complaints yet.</p>
           ) : (
             complaints.slice(0, 5).map((complaint) => (
-              <div key={complaint._id} className="border-b dark:border-gray-700 pb-3 flex justify-between items-center last:border-b-0 last:pb-0">
-                <div>
-                  <Link to={`/complaint/${complaint.id}`} className="font-semibold text-blue-600 hover:underline">{complaint.title}</Link>
+              <div key={complaint._id} className="border-b dark:border-gray-700 pb-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 last:border-b-0 last:pb-0">
+                <div className="min-w-0">
+                  <Link to={`/complaint/${complaint.id}`} className="font-semibold text-blue-600 hover:underline text-sm sm:text-base truncate block">{complaint.title}</Link>
                   <p className="text-xs text-gray-500 mt-1">Submitted on {new Date(complaint.createdAt).toLocaleDateString()}</p>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase ${getStatusColor(complaint.status)}`}>
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  <span className={`text-[10px] sm:text-[11px] px-2 sm:px-2.5 py-0.5 rounded-full font-bold uppercase ${getStatusColor(complaint.status)}`}>
                     {complaint.status}
                   </span>
-                  <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 hidden sm:block">
+                  <div className="w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 hidden sm:block">
                     <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${getProgressPercentage(complaint.status)}%` }} />
                   </div>
                 </div>

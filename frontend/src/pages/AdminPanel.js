@@ -135,15 +135,15 @@ const AdminPanel = () => {
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 dark:border-gray-700 pb-5">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Admin Control Center</h1>
-          <p className="text-gray-500 mt-1">Configure system variables, manage user credentials, and manage role-based routing.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">Admin Control Center</h1>
+          <p className="text-gray-500 mt-1 text-sm">Configure system variables, manage user credentials, and manage role-based routing.</p>
         </div>
 
         {/* Tab switchers */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700">
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 sm:p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition ${
               activeTab === 'users' 
                 ? 'bg-white dark:bg-gray-750 text-purple-600 dark:text-purple-400 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-350'
@@ -154,7 +154,7 @@ const AdminPanel = () => {
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition ${
               activeTab === 'settings' 
                 ? 'bg-white dark:bg-gray-750 text-purple-600 dark:text-purple-400 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-350'
@@ -234,7 +234,7 @@ const AdminPanel = () => {
           </div>
         </div>
       ) : (
-        <form onSubmit={saveSettings} className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-8 space-y-6">
+        <form onSubmit={saveSettings} className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-4 sm:p-8 space-y-6">
           <div className="border-b border-gray-100 dark:border-gray-700 pb-3 flex items-center gap-2">
             <EnvelopeIcon className="w-6 h-6 text-purple-650" />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Email Routing Setup</h2>

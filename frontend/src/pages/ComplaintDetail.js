@@ -219,32 +219,32 @@ const ComplaintDetail = () => {
       {/* Main card */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 overflow-hidden">
         {/* Banner */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-8 text-white">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 sm:px-8 py-6 sm:py-8 text-white">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="min-w-0">
               <span className="text-purple-200 text-xs font-bold uppercase tracking-wide">
                 Grievance #{complaint.id}
               </span>
-              <h1 className="text-3xl font-bold mt-1 leading-tight">{complaint.title}</h1>
+              <h1 className="text-xl sm:text-3xl font-bold mt-1 leading-tight break-words">{complaint.title}</h1>
             </div>
-            <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${statusColors[complaint.status]}`}>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold border uppercase tracking-wider ${statusColors[complaint.status]}`}>
                 {complaint.status}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-y-2 gap-x-6 mt-6 text-sm text-purple-100">
+          <div className="flex flex-wrap gap-y-1 gap-x-4 sm:gap-x-6 mt-4 sm:mt-6 text-xs sm:text-sm text-purple-100">
             <span className="capitalize"><strong>Category:</strong> {complaint.category.replace('_', ' ')}</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span className="capitalize"><strong>Priority:</strong> {complaint.priority}</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span><strong>Submitted:</strong> {new Date(complaint.createdAt).toLocaleString()}</span>
           </div>
         </div>
 
         {/* Progress tracker */}
-        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700/50 px-8 py-5">
+        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700/50 px-4 sm:px-8 py-4 sm:py-5">
           <div className="flex justify-between items-center text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">
             <span>RESOLUTION PROGRESS</span>
             <span>{progressPercent}% COMPLETE</span>
@@ -260,7 +260,7 @@ const ComplaintDetail = () => {
         </div>
 
         {/* Details list */}
-        <div className="p-8 space-y-6">
+        <div className="p-4 sm:p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-gray-100 dark:border-gray-700 pb-6">
             <div className="flex items-start space-x-3">
               <UserIcon className="w-5 h-5 text-gray-400 mt-0.5" />
@@ -333,7 +333,7 @@ const ComplaintDetail = () => {
 
       {/* Vice Principal / Admin Priority Manager */}
       {(isVP || isAdmin) && (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-8 space-y-4 animate-fadeIn">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-4 sm:p-8 space-y-4 animate-fadeIn">
           <div className="flex items-center space-x-2 border-b border-gray-100 dark:border-gray-700 pb-3">
             <ExclamationTriangleIcon className="w-5 h-5 text-purple-600" />
             <h3 className="font-bold text-lg text-gray-900 dark:text-white">Grievance Priority Manager</h3>
@@ -373,7 +373,7 @@ const ComplaintDetail = () => {
 
       {/* Vice Principal Approvals form */}
       {isVP && complaint.status === 'Pending Vice Principal Approval' && (
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-8 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-4 sm:p-8 space-y-4">
           <div className="flex items-center space-x-2 border-b border-gray-100 dark:border-gray-700 pb-3">
             <SparklesIcon className="w-5 h-5 text-purple-600" />
             <h3 className="font-bold text-lg text-gray-950 dark:text-white">Vice Principal Review & Actions</h3>
@@ -436,7 +436,7 @@ const ComplaintDetail = () => {
 
       {/* Coordinator Progress Form */}
       {isAssignedCoordinator && !['Resolved', 'Closed', 'Rejected by Vice Principal'].includes(complaint.status) && (
-        <form onSubmit={handleCoordinatorUpdate} className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-8 space-y-5">
+        <form onSubmit={handleCoordinatorUpdate} className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-4 sm:p-8 space-y-5">
           <div className="flex items-center space-x-2 border-b border-gray-100 dark:border-gray-700 pb-3">
             <ChatBubbleLeftRightIcon className="w-5 h-5 text-blue-600" />
             <h3 className="font-bold text-lg text-gray-900 dark:text-white">Post Stage Update</h3>
@@ -505,7 +505,7 @@ const ComplaintDetail = () => {
       )}
 
       {/* Historical chronological updates table */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-4 sm:p-8">
         <h3 className="font-bold text-lg text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3 mb-6">
           Investigation History & Progress Timeline
         </h3>
@@ -568,7 +568,7 @@ const ComplaintDetail = () => {
       </div>
 
       {/* Main system Audit/Timeline log */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-150 dark:border-gray-700 p-4 sm:p-8">
         <h3 className="font-bold text-lg text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3 mb-6">
           Official Action Timeline
         </h3>
