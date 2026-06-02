@@ -6,8 +6,8 @@ const AuditLog = require('../models/AuditLog');
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'grievance_system_super_secret_key_2024', {
+    expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 
