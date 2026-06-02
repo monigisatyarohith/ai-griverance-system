@@ -354,7 +354,7 @@ exports.approveComplaint = async (req, res) => {
     // Audit Log
     await AuditLog.create({
       userId: req.user.id,
-      action: 'approve',
+      action: 'assign',
       resource: 'complaint',
       resourceId: complaint.id,
       details: { remarks },
@@ -578,7 +578,7 @@ exports.addGrievanceUpdate = async (req, res) => {
     // Audit Log
     await AuditLog.create({
       userId: req.user.id,
-      action: 'update_progress',
+      action: 'update',
       resource: 'complaint',
       resourceId: complaint.id,
       details: { status, remarks, attachmentPath },
